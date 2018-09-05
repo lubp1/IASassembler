@@ -1,0 +1,47 @@
+Trabalho 1 -- MC 404
+
+Este arquivo possui informações diversas sobre o trabalho.
+
+O trabalho deve ser escrito na linguagem C (utilizando apenas as bibliotecas padrões).
+Uma suite de compilação e teste é disponibilizada pelo Makefile. A estrutura do diretório é mostrada abaixo:
+
+codigo_v1:
+    bin: Contém o arquivo binário do montador, referente ao seu código
+    resultados: Contém os resultados esperados dos testes abertos para a parte 1
+    saidas: Contém os reaultados dos testes executados
+    src: Deve conter os arquivos de cabeçalho (.h) e de código fonte do seu programa (.c)
+    testes: Contém os arquivos de entrada para realização dos testes
+    Makefile:
+        Para auxiliar, o Makefile contém as regras a seguir (são similares às utilizadas no Sistema Susy):
+        * montador.x: Compila os arquivos da pasta src e gera um binario do montador, na pasta bin.
+        * executar: Executa um teste (00, 01, 02, 03, 04, 05, 06, 07 ou 08). Exemplo: make -s executar teste=01 (Executa o teste 01). A saída é escrita na tela e copiada para um arquivo na pasta saidas
+        * executar-tudo: Similar ao comando de executar, porém executa todas as instancias de teste
+        * testar-parte-1: Compara o resultado gerado (pasta saidas) com o esperado (pasta resultados. Exemplo: make -s testar-parte-1 teste=01 (Executa o teste 01).
+        * clean: Limpa os arquivos binários
+
+
+O trabalho é dividido em duas partes: (1) processamento da entrada e (2) emissão do mapa de memória
+    (1) Nesta parte, você deve implementar a função 'int processarEntrada(char*, unsigned);' do arquivo processarEntrada.c. Você pode utilizar funções e arquivos auxiliares (colocando-os na pasta src)
+
+    Supondo o código:
+
+    .org 10         #linha 1
+    add 0x10        #linha 2
+
+    * Primeiro delimite os caracteres da entrada por seus espaços (tabulações e troca de linhas). Comentários são ignorados:
+        palavra: ".org"
+        palavra: "10"
+        palavra: "add"
+        palavra: "0x10"
+
+    * Determine qual token referente a cada palavra e crie e adicione-o na lista de tokens (veja arquivo token.h):
+        ".org"  -> tipo: Diretiva, palavra: ".org", linha: 1
+        "10"  -> tipo: Decimal, palavra: "10", linha: 2
+
+    * Nesta fase, você pode verificar erros lexicos
+
+    * Posteriormente, você pode verificar todos os tokens coletados, em ordem e verificar por erros gramaticais....
+
+-------------------------------------------------------
+
+A submissão deve ser feita no Susy dos arquivos .c e .h, e não deve passar de 8mb
