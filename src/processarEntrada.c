@@ -22,6 +22,22 @@ const char* get_error_string (enum errors code) {
 */
 int processarEntrada(char* entrada, unsigned tamanho)
 {
-    /* printf("Você deve implementar esta função para a Parte 1.\n"); */
+    int i=0, j=0, linha=0;
+    char* palavra = malloc(tamanho*sizeof(char));
+    token novoToken = malloc(sizeof(token));
+
+    while(i<tamanho && entrada[i]!=0 && entrada[i]!='\n' && entrada[i]!='\0') {
+        palavra[j]=entrada[i];
+        j++;
+    }
+    palavra[j]='\0';
+    if(palavra[0]=='.') { //o token pode ser uma diretiva
+        novoToken.tipo = "Diretiva";
+        //copia a palavra
+    }
+
+
+
+    free(palavra);
     return 0;
 }
