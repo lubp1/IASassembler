@@ -1,5 +1,6 @@
 #include "montador.h"
 #include <stdio.h>
+#include <string.h>
 
 /*
 Exemplo de erros:
@@ -26,18 +27,38 @@ int processarEntrada(char* entrada, unsigned tamanho)
     char* palavra = malloc(tamanho*sizeof(char));
     token novoToken = malloc(sizeof(token));
 
-    while(i<tamanho && entrada[i]!=0 && entrada[i]!='\n' && entrada[i]!='\0') {
-        palavra[j]=entrada[i];
-        j++;
-    }
-    palavra[j]='\0';
-    if(palavra[0]=='.') { //o token pode ser uma diretiva
-        novoToken.tipo = "Diretiva";
-        //copia a palavra
-    }
 
+    while (entrada[i]!='\0') {
+      j=0;
+      while(i<tamanho && entrada[i]!=' ' && entrada[i]!='\n') {
+          palavra[j]=entrada[i];
+          i++;
+          j++;
+      }
+
+      palavra[j]='\0';
+      i++;
+      if(palavra[j-1]=='\n') {
+        linha++;
+      }
+
+      if(palavra[0]=='.') { //possivel diretiva
+          novoToken.tipo = "Diretiva";
+      }
+      else if (palavra[j-1]==':') { //possivel rotulo
+          novoToken.tipo = "DefRotulo";
+      }
+      else if (palavra[0]=='0' && palavra[1]=='x') { //possivel hexadecimal
+          novoToken.tipo = "Hexadecimal";
+      }
+      strcpy(novoToken.palavra,palavra);
+      novoToken.linha = linha;
+      adicionarToken(novoToken);
+
+  }
 
 
     free(palavra);
+    free(novoToken);
     return 0;
 }
