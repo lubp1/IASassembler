@@ -1,2 +1,2 @@
-ERRO GRAMATICAL: palavra na linha 2!
-Comment: GRAMMAR: Unknown Directive 'wfillet'!
+ERRO LEXICO: palavra inválida na linha 1!
+[OPTIONAL] Comment: LEXICO: Não é uma diretiva válida!

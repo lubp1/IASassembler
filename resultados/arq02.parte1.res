@@ -1,2 +1,2 @@
-ERRO LEXICO: palavra inválida na linha 6!
-Comment: LEXICAL: Not a valid name
+ERRO LEXICO: palavra inválida na linha 5!
+[OPTIONAL] Comment: LEXICO: Não é um nome valido!

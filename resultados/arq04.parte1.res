@@ -1,2 +1,2 @@
 ERRO LEXICO: palavra inválida na linha 4!
-Comment: LEXICAL: Not a valid decimal number!
+[OPTIONAL] Comment: LEXICO: Não é um número decimal válido!

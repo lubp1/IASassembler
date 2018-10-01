@@ -4,6 +4,11 @@
 /* Retorna:
  *  1 caso haja erro na montagem;
  *  0 caso não haja erro.
+ *
+ * Esse é o arquivo principal utilizado para chamar as rotinas de processamento de entrada e emissão de código
+ * Para testar a parte 1, não escreva nada na função emitirMapaDeMemoria();
+ * Para testar a parte 2, comente a linha 40 imprimeListaTokens()
+ * Esta função será utilizada como está, portanto, não altere-a, nem adicione coisas neste arquivo
  */
 int main(int args, char** argv)
 {

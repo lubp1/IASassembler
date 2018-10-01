@@ -1,2 +1,2 @@
-ERRO LEXICO: palavra inválida na linha 5!
-Comment: LEXICAL: Not a valid directive
+ERRO LEXICO: palavra inválida na linha 4!
+[OPTIONAL] Comment: LEXICO: Não é uma diretiva válida!

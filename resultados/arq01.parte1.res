@@ -1,2 +1,2 @@
 ERRO LEXICO: palavra inválida na linha 2!
-Comment: LEXICAL: Not a valid hexadecimal number!
+[OPTIONAL] Comment: LEXICO: Não é um número hexadecimal válido!
