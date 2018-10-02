@@ -27,6 +27,7 @@ int processarEntrada(char* entrada, unsigned tamanho)
     char* palavra = malloc(tamanho*sizeof(char));
     token novoToken = malloc(sizeof(token));
     novoToken.palavra = malloc(tamanho*sizeof(char));
+    token tokensLinha = malloc(20*sizeof(token));
 
 
     for(i=0;i<tamanho;i++) { //transformando toda a string em lowercase
@@ -50,6 +51,17 @@ loop:
           i++;
         linha++;
         i++;
+
+        //olhando a linha que acabou de ser lida para possiveis erros gramaticais
+        unsigned a, b=0;
+        for(a=0;a<getNumberOfTokens();a++) {
+          if(recuperaToken(a).linha == linha-1) {
+            tokensLinha[b++] = recuperaToken(a);
+          }
+          if(recuperaToken(a).linha == linha) {
+            break;
+          }
+        }
         goto loop;
       }
 
@@ -64,6 +76,18 @@ loop:
       if(entrada[i]=='\n') { //se chegou no fim da linha
         linha++;
         i++;
+
+
+        //olhando a linha que acabou de ser lida para possiveis erros gramaticais
+        unsigned a, b=0;
+        for(a=0;a<getNumberOfTokens();a++) {
+          if(recuperaToken(a).linha == linha-1) {
+            tokensLinha[b++] = recuperaToken(a);
+          }
+          if(recuperaToken(a).linha == linha) {
+            break;
+          }
+        }
       }
 
       if(palavra[0]=='.') { //possivel diretiva
@@ -139,15 +163,16 @@ int ehDecimal(char* dec) {
 }
 
 int ehRotulo(char* rot) {
-  int a;
+  int a=0;
 
   if(rot[0]>='0' && rot[0]<='9') {
     return 0;
   }
   while(rot[a+1]!='\0') {
-    if(((rot[a]<"a" || rot[a]>"z") && rot[a]!='_')) {
+    if((!(rot[a]>='a' && rot[a]<='z') || !(rot[a]>='0' && rot[a]<='9')) && rot[a]!='_') {
       return 0;
     }
+    a++;
   }
 
   return 1;
@@ -173,13 +198,16 @@ int ehInstrucao(char* ins) {
 
 int ehNome(char* nome) {
 
-  if(rot[0]>='0' && rot[0]<='9') {
+  if(nome[0]>='0' && nome[0]<='9') {
     return 0;
   }
-  while(rot[a]!='\0') {
-    if(((rot[a]<"a" || rot[a]>"z") && rot[a]!='_')) {
+
+  int a=0;
+  while(nome[a]!='\0') {
+    if((!(nome[a]>='a' && nome[a]<='z') || !(nome[a]>='0' && nome[a]<='9')) && nome[a]!='_') {
       return 0;
     }
+    a++;
   }
 
   return 1;
