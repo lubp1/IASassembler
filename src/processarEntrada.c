@@ -37,48 +37,69 @@ int processarEntrada(char* entrada, unsigned tamanho)
 
     i=0;
     //o int i eh o contador para percorrer a entrada e o int j o contador para cada palavra
+loop:
     while(entrada[i]!='\0') {
-loop: j=0;
+      j=0;
+
+      while((entrada[i]==' ' || entrada[i]==9) && i<tamanho) { //remove tabulacoes e espacos
+        i++;
+      }
 
       if(entrada[i]=='#') { //eh uma linha de comentario, que deve ser ignorada
-        while(entrada[i]!='/n')
+        while(entrada[i]!='/n' && i<tamanho)
           i++;
         linha++;
         i++;
         goto loop;
       }
 
-      while(i<tamanho && entrada[i]!=' ' && entrada[i]!='\n') { //le uma palavra
+      while(i<tamanho && entrada[i]!=' ' && entrada[i]!=9 && entrada[i]!='\n') { //le uma palavra
           palavra[j]=entrada[i];
           i++;
           j++;
       }
-      while(entrada[i]=' ' && i<tamanho) { //remove os espacos
-          i++;
-      }
 
       palavra[j]='\0';
 
-      if(palavra[j-1]=='\n') {
+      if(entrada[i]=='\n') { //se chegou no fim da linha
         linha++;
-        palavra[j-1] = '\0';
+        i++;
       }
 
       if(palavra[0]=='.') { //possivel diretiva
-          novoToken.tipo = "Diretiva";
+        if(!ehDiretiva(palavra)) {
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
+          return 1;
+        }
+        novoToken.tipo = "Diretiva";
       }
       else if (palavra[j-1]==':') { //possivel rotulo
-          novoToken.tipo = "DefRotulo";
-          palavra[j-1] = '\0';
+        if(!ehRotulo(palavra)) {
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
+          return 1;
+        }
+        novoToken.tipo = "DefRotulo";
+        palavra[j-1] = '\0';
       }
       else if (palavra[0]=='0' && palavra[1]=='x') { //possivel hexadecimal
-          novoToken.tipo = "Hexadecimal";
+        if(!ehHexa(palavra)) {
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
+          return 1;
+        }
+        novoToken.tipo = "Hexadecimal";
       }
       else if (ehDecimal(palavra)) { //numero decimal
-          novoToken.tipo = "Decimal";
+        novoToken.tipo = "Decimal";
+      }
+      else if (ehInstrucao(palavra)) { //instrucao
+        novoToken.tipo = "Instrucao";
       }
       else {
-          novoToken.tipo = "Nome";
+        if(!ehNome(palavra)) {
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
+          return 1;
+        }
+        novoToken.tipo = "Nome";
       }
       strcpy(novoToken.palavra,palavra);
       novoToken.linha = linha;
@@ -94,11 +115,72 @@ loop: j=0;
 }
 
 
-int ehDecimal(char* dec) {
-
-  while(char[i]!='\0') {
-    if(char[i]<0 || char[i]>9)
+int ehHexa(char* hex) {
+  int i=2;
+  while(hex[i]!='\0') {
+    if(!(hex[i]>='0' && hex[i]<='9') || !(hex[i]>='a' || hex[i]<='f'))
       return 0;
+    i++;
   }
+  if(i>2)
+    return 1;
+}
+
+
+
+int ehDecimal(char* dec) {
+  int i=0;
+  while(dec[i]!='\0') {
+    if(dec[i]<'0' || dec[i]>'9')
+      return 0;
+    i++;
+  }
+  return 1;
+}
+
+int ehRotulo(char* rot) {
+  int a;
+
+  if(rot[0]>='0' && rot[0]<='9') {
+    return 0;
+  }
+  while(rot[a+1]!='\0') {
+    if(((rot[a]<"a" || rot[a]>"z") && rot[a]!='_')) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+int ehDiretiva(char* dir) {
+  if(strcmp(dir,".set") || strcmp(dir,".org") || strcmp(dir,".align") || strcmp(dir,"wfill") || strcmp(dir,"word")) {
+    return 1;
+  }
+  return 0;
+}
+
+
+int ehInstrucao(char* ins) {
+  if(strcmp(ins,"ld") || strcmp(ins,"ldinv") || strcmp(ins,"ldabs") || strcmp(ins,"ldmq") || strcmp(ins,"ldmqmx") || strcmp(ins,"store") || strcmp(ins,"jump") ||
+    strcmp(ins,"jumpl") || strcmp(ins,"jumpr") || strcmp(ins,"add") || strcmp(ins,"addabs") || strcmp(ins,"sub") || strcmp(ins,"subabs") || strcmp(ins,"mult") ||
+    strcmp(ins,"div") || strcmp(ins,"lsh") || strcmp(ins,"rsh") || strcmp(ins,"storal") || strcmp(ins,"storar")) {
+      return 1;
+  }
+  return 0;
+}
+
+
+int ehNome(char* nome) {
+
+  if(rot[0]>='0' && rot[0]<='9') {
+    return 0;
+  }
+  while(rot[a]!='\0') {
+    if(((rot[a]<"a" || rot[a]>"z") && rot[a]!='_')) {
+      return 0;
+    }
+  }
+
   return 1;
 }
