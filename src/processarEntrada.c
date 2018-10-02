@@ -89,7 +89,7 @@ loop:
       }
 
       if(palavra[0]=='.') { //possivel diretiva
-        if(!ehDiretiva(palavra)) {
+        if(ehDiretiva(palavra) == 0) {
           fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
           return 1;
         }
@@ -98,14 +98,14 @@ loop:
       else if (palavra[j-1]==':') { //possivel rotulo
         if(!ehRotulo(palavra)) {
           fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
-          //return 1;
+          return 1;
         }
         novoToken.tipo = DefRotulo;
       }
       else if (palavra[0]=='0' && palavra[1]=='x') { //possivel hexadecimal
         if(!ehHexa(palavra)) {
           fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
-          //return 1;
+          return 1;
         }
         novoToken.tipo = Hexadecimal;
       }
@@ -118,7 +118,7 @@ loop:
       else {
         if(!ehNome(palavra)) {
           fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
-          //return 1;
+          return 1;
         }
         novoToken.tipo = Nome;
       }
@@ -174,7 +174,7 @@ int ehRotulo(char* rot) {
 }
 
 int ehDiretiva(char* dir) {
-  if(strcmp(dir,".set") || strcmp(dir,".org") || strcmp(dir,".align") || strcmp(dir,".wfill") || strcmp(dir,".word")) {
+  if(!strcmp(dir,".set") || !strcmp(dir,".org") || !strcmp(dir,".align") || !strcmp(dir,".wfill") || !strcmp(dir,".word")) {
     return 1;
   }
   return 0;
@@ -182,9 +182,9 @@ int ehDiretiva(char* dir) {
 
 
 int ehInstrucao(char* ins) {
-  if(strcmp(ins,"ld") || strcmp(ins,"ldinv") || strcmp(ins,"ldabs") || strcmp(ins,"ldmq") || strcmp(ins,"ldmqmx") || strcmp(ins,"store") || strcmp(ins,"jump") ||
-    strcmp(ins,"jumpl") || strcmp(ins,"jumpr") || strcmp(ins,"add") || strcmp(ins,"addabs") || strcmp(ins,"sub") || strcmp(ins,"subabs") || strcmp(ins,"mult") ||
-    strcmp(ins,"div") || strcmp(ins,"lsh") || strcmp(ins,"rsh") || strcmp(ins,"storal") || strcmp(ins,"storar")) {
+  if(!strcmp(ins,"ld") || !strcmp(ins,"ldinv") || !strcmp(ins,"ldabs") || !strcmp(ins,"ldmq") || !strcmp(ins,"ldmqmx") || !strcmp(ins,"store") || !strcmp(ins,"jump") ||
+    !strcmp(ins,"jumpl") || !strcmp(ins,"jumpr") || !strcmp(ins,"add") || !strcmp(ins,"addabs") || !strcmp(ins,"sub") || !strcmp(ins,"subabs") || !strcmp(ins,"mult") ||
+    !strcmp(ins,"div") || !strcmp(ins,"lsh") || !strcmp(ins,"rsh") || !strcmp(ins,"storal") || !strcmp(ins,"storar")) {
       return 1;
   }
   return 0;
@@ -199,7 +199,7 @@ int ehNome(char* nome) {
 
   int a=0;
   while(nome[a]!='\0') {
-    if((!(nome[a]>='a' && nome[a]<='z') || !(nome[a]>='0' && nome[a]<='9')) && nome[a]!='_') {
+    if((!((nome[a]>='a' && nome[a]<='z') || (nome[a]>='0' && nome[a]<='9'))) && nome[a]!='_') {
       return 0;
     }
     a++;
