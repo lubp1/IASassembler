@@ -1,33 +1,22 @@
 #include "montador.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-/*
-Exemplo de erros:
-const char* get_error_string (enum errors code) {
-    switch (code) {
-        case ERR_HEXADECIMAL_NAO_VALIDO:
-            return "LEXICO: Numero Hexadecimal Inválido!";
-        case ERRO_ROTULO_JA_DEFINIDO:
-            return "GRAMATICAL: ROTULO JA FOI DEFINIDO!";
-        case ERR_DIRETIVA_NAO_VALIDA:
-            return "LEXICO: Diretiva não válida";
-*/
+int ehHexa(char* hex);
+int ehDecimal(char* dec);
+int ehRotulo(char* rot);
+int ehDiretiva(char* dir);
+int ehInstrucao(char* ins);
+int ehNome(char* nome);
 
-/*
-    ---- Você Deve implementar esta função para a parte 1.  ----
-    Entrada da função: arquivo de texto lido e seu tamanho
-    Retorna:
-        * 1 caso haja erro na montagem;
-        * 0 caso não haja erro.
-*/
+
+
 int processarEntrada(char* entrada, unsigned tamanho)
 {
-    int i=0, j=0, linha=0;
-    char* palavra = malloc(tamanho*sizeof(char));
-    token novoToken = malloc(sizeof(token));
-    novoToken.palavra = malloc(tamanho*sizeof(char));
-    token tokensLinha = malloc(20*sizeof(token));
+    int i=0, j=0, linha=1;
+    Token novoToken;
+    Token* tokensLinha = malloc(20*sizeof(Token));
 
 
     for(i=0;i<tamanho;i++) { //transformando toda a string em lowercase
@@ -40,6 +29,8 @@ int processarEntrada(char* entrada, unsigned tamanho)
     //o int i eh o contador para percorrer a entrada e o int j o contador para cada palavra
 loop:
     while(entrada[i]!='\0') {
+
+      char* palavra = malloc(tamanho*sizeof(char));
       j=0;
 
       while((entrada[i]==' ' || entrada[i]==9) && i<tamanho) { //remove tabulacoes e espacos
@@ -47,7 +38,7 @@ loop:
       }
 
       if(entrada[i]=='#') { //eh uma linha de comentario, que deve ser ignorada
-        while(entrada[i]!='/n' && i<tamanho)
+        while(entrada[i]!='\n' && i<tamanho)
           i++;
         linha++;
         i++;
@@ -62,6 +53,10 @@ loop:
             break;
           }
         }
+        
+
+
+
         goto loop;
       }
 
@@ -72,6 +67,7 @@ loop:
       }
 
       palavra[j]='\0';
+      novoToken.linha = (unsigned)linha;
 
       if(entrada[i]=='\n') { //se chegou no fim da linha
         linha++;
@@ -88,53 +84,50 @@ loop:
             break;
           }
         }
+        if(strcmp("",palavra) == 0)
+          goto loop;
       }
 
       if(palavra[0]=='.') { //possivel diretiva
         if(!ehDiretiva(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
           return 1;
         }
-        novoToken.tipo = "Diretiva";
+        novoToken.tipo = Diretiva;
       }
       else if (palavra[j-1]==':') { //possivel rotulo
         if(!ehRotulo(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
-          return 1;
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          //return 1;
         }
-        novoToken.tipo = "DefRotulo";
-        palavra[j-1] = '\0';
+        novoToken.tipo = DefRotulo;
       }
       else if (palavra[0]=='0' && palavra[1]=='x') { //possivel hexadecimal
         if(!ehHexa(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
-          return 1;
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          //return 1;
         }
-        novoToken.tipo = "Hexadecimal";
+        novoToken.tipo = Hexadecimal;
       }
       else if (ehDecimal(palavra)) { //numero decimal
-        novoToken.tipo = "Decimal";
+        novoToken.tipo = Decimal;
       }
       else if (ehInstrucao(palavra)) { //instrucao
-        novoToken.tipo = "Instrucao";
+        novoToken.tipo = Instrucao;
       }
       else {
         if(!ehNome(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d\n", &linha);
-          return 1;
+          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          //return 1;
         }
-        novoToken.tipo = "Nome";
+        novoToken.tipo = Nome;
       }
-      strcpy(novoToken.palavra,palavra);
-      novoToken.linha = linha;
+      novoToken.palavra = palavra;
       adicionarToken(novoToken);
 
   }
 
 
-    free(palavra);
-    free(novoToken.palavra);
-    free(novoToken);
     return 0;
 }
 
@@ -142,12 +135,14 @@ loop:
 int ehHexa(char* hex) {
   int i=2;
   while(hex[i]!='\0') {
-    if(!(hex[i]>='0' && hex[i]<='9') || !(hex[i]>='a' || hex[i]<='f'))
+    if(!((hex[i]>='0' && hex[i]<='9') || (hex[i]>='a' && hex[i]<='f')))
       return 0;
     i++;
   }
-  if(i>2)
+  if(i>=2)
     return 1;
+  else
+    return 0;
 }
 
 
@@ -169,7 +164,7 @@ int ehRotulo(char* rot) {
     return 0;
   }
   while(rot[a+1]!='\0') {
-    if((!(rot[a]>='a' && rot[a]<='z') || !(rot[a]>='0' && rot[a]<='9')) && rot[a]!='_') {
+    if(!((rot[a]>='a' && rot[a]<='z') || (rot[a]>='0' && rot[a]<='9')) && rot[a]!='_') {
       return 0;
     }
     a++;
@@ -179,7 +174,7 @@ int ehRotulo(char* rot) {
 }
 
 int ehDiretiva(char* dir) {
-  if(strcmp(dir,".set") || strcmp(dir,".org") || strcmp(dir,".align") || strcmp(dir,"wfill") || strcmp(dir,"word")) {
+  if(strcmp(dir,".set") || strcmp(dir,".org") || strcmp(dir,".align") || strcmp(dir,".wfill") || strcmp(dir,".word")) {
     return 1;
   }
   return 0;
