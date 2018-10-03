@@ -10,8 +10,6 @@ int ehDiretiva(char* dir);
 int ehInstrucao(char* ins);
 int ehNome(char* nome);
 int analizaLinha(Token* tokens, int tam);
-int toDec(char* str);
-int toHex(char* str);
 
 int processarEntrada(char* entrada, unsigned tamanho)
 {
@@ -218,47 +216,48 @@ int ehNome(char* nome) {
 }
 
 
-int analizaLinha(Token* tokens, int tam) {
+int analizaLinha(Token* token, int tam) {
     if(tam==0)
         return 0;
-    if(tokens[0].tipo==Diretiva) {
-        if(!strcmp(tokens[0].palavra,".set") && (tam<2 || tokens[1].tipo!=Nome || (!(tokens[2].tipo==Decimal) && !(tokens[2].tipo==Hexadecimal)))) {
-                fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+    if(token[0].tipo == Diretiva) {
+        if(!strcmp(token[0].palavra,".set") && (tam-1!=2 || token[1].tipo!=Nome || (!(token[2].tipo==Decimal) && !(token[2].tipo==Hexadecimal)))) {
+                fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
                 return 1;
         }
-        else if(!strcmp(tokens[0].palavra,".org") && (tam<1 || (!(tokens[1].tipo==Decimal && toDec(tokens[1].palavra)<1024) && !(tokens[1].tipo==Hexadecimal && toHex(tokens[1].palavra)<1024)))) {
-            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+        else if(!strcmp(token[0].palavra,".org") && (tam-1!=1 || (!(token[1].tipo==Decimal && ((int)strtol(token[1].palavra,NULL,10))<1024) && !(token[1].tipo==Hexadecimal &&
+                ((int)strtol(token[1].palavra,NULL,16))<1024)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
             return 1;
         }
-        else if(!strcmp(tokens[0].palavra,".align") && (tam<1 || (!(tokens[1].tipo==Decimal && toDec(tokens[1].palavra)<1024)))) {
-            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+        else if(!strcmp(token[0].palavra,".align") && (tam-1!=1 || (!(token[1].tipo==Decimal && ((int)strtol(token[1].palavra,NULL,10))<1024)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
             return 1;
         }
-        else if(!strcmp(tokens[0].palavra,".wfill") && (tam<2 || !(tokens[1].tipo==Decimal && toDec(tokens[1].palavra)<1024) || (!(tokens[2].tipo==Decimal) && !(tokens[2].tipo==Hexadecimal) &&
-            !(tokens[2].tipo==Nome)))) {
-            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+        else if(!strcmp(token[0].palavra,".wfill") && (tam-1!=2 || !(token[1].tipo==Decimal && ((int)strtol(token[1].palavra,NULL,10))<1024) ||
+                (!(token[2].tipo==Decimal) && !(token[2].tipo==Hexadecimal) && !(token[2].tipo==Nome)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
             return 1;
         }
-        else if(!strcmp(tokens[0].palavra,".word") && (tam<1 || (!(tokens[2].tipo==Decimal) && !(tokens[2].tipo==Hexadecimal) && !(tokens[2].tipo==Nome)))) {
-            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+        else if(!strcmp(token[0].palavra,".word") && (tam-1!=1 || (!(token[1].tipo==Decimal) && !(token[1].tipo==Hexadecimal) && !(token[1].tipo==Nome)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
             return 1;
         }
 
+    }
+    else if(token[0].tipo == DefRotulo) {
+        int i;
+        for(i=1;i<=tam;i++) {
+            if(token[i].tipo == DefRotulo) {
+                fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
+                return 1;
+            }
+        }
+    }
+    else if(token[0].tipo == Nome) {
+        fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", token[0].linha);
+        return 1;
     }
 
     return 0;
 }
 
-
-int toDec(char* str) { //converte uma string que representa um decimal para int
-    int i=0, a=0;
-    while(str[i]!='\0') {
-        i++;
-    }
-    return a;
-}
-
-int toHex(char* str) { //converte uma string que representa um hexa para int
-    int a=0;
-    return a;
-}
