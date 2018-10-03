@@ -9,8 +9,9 @@ int ehRotulo(char* rot);
 int ehDiretiva(char* dir);
 int ehInstrucao(char* ins);
 int ehNome(char* nome);
-
-
+int analizaLinha(Token* tokens, int tam);
+int toDec(char* str);
+int toHex(char* str);
 
 int processarEntrada(char* entrada, unsigned tamanho)
 {
@@ -29,7 +30,7 @@ int processarEntrada(char* entrada, unsigned tamanho)
     //o int i eh o contador para percorrer a entrada e o int j o contador para cada palavra
 loop:
     while(entrada[i]!='\0') {
-
+      int fim=0;
       char* palavra = malloc(tamanho*sizeof(char));
       j=0;
 
@@ -42,19 +43,21 @@ loop:
           i++;
         linha++;
         i++;
-
-        //olhando a linha que acabou de ser lida para possiveis erros gramaticais
-        unsigned a, b=0;
-        for(a=0;a<getNumberOfTokens();a++) {
-          if(recuperaToken(a).linha == linha-1) {
-            tokensLinha[b++] = recuperaToken(a);
-          }
-          if(recuperaToken(a).linha == linha) {
-            break;
-          }
+        fim=1;
+        if(getNumberOfTokens()>1 && recuperaToken(getNumberOfTokens()-1).linha == linha-1) {
+            unsigned a, b=0;
+            for(a=0;a<getNumberOfTokens();a++) {
+                if(recuperaToken(a).linha == linha-1) {
+                    tokensLinha[b++] = recuperaToken(a);
+                }
+                if(recuperaToken(a).linha == linha) {
+                    break;
+                }
+            }
+            if(analizaLinha(tokensLinha,b)) {
+                return 1;
+            }
         }
-        
-
 
 
         goto loop;
@@ -72,39 +75,30 @@ loop:
       if(entrada[i]=='\n') { //se chegou no fim da linha
         linha++;
         i++;
+        fim=1;
 
 
-        //olhando a linha que acabou de ser lida para possiveis erros gramaticais
-        unsigned a, b=0;
-        for(a=0;a<getNumberOfTokens();a++) {
-          if(recuperaToken(a).linha == linha-1) {
-            tokensLinha[b++] = recuperaToken(a);
-          }
-          if(recuperaToken(a).linha == linha) {
-            break;
-          }
-        }
         if(strcmp("",palavra) == 0)
           goto loop;
       }
 
       if(palavra[0]=='.') { //possivel diretiva
         if(ehDiretiva(palavra) == 0) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          fprintf(stderr, "ERRO LEXICO: palavra inválida na linha %d!\n", linha);
           return 1;
         }
         novoToken.tipo = Diretiva;
       }
       else if (palavra[j-1]==':') { //possivel rotulo
         if(!ehRotulo(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          fprintf(stderr, "ERRO LEXICO: palavra inválida na linha %d!\n", linha);
           return 1;
         }
         novoToken.tipo = DefRotulo;
       }
       else if (palavra[0]=='0' && palavra[1]=='x') { //possivel hexadecimal
         if(!ehHexa(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          fprintf(stderr, "ERRO LEXICO: palavra inválida na linha %d!\n", linha);
           return 1;
         }
         novoToken.tipo = Hexadecimal;
@@ -117,7 +111,7 @@ loop:
       }
       else {
         if(!ehNome(palavra)) {
-          fprintf(stderr, "ERRO LEXICO: palavra invalida na linha %d!\n", linha);
+          fprintf(stderr, "ERRO LEXICO: palavra inválida na linha %d!\n", linha);
           return 1;
         }
         novoToken.tipo = Nome;
@@ -125,6 +119,21 @@ loop:
       novoToken.palavra = palavra;
       adicionarToken(novoToken);
 
+      if(fim) {
+          //separando os tokens da ultima linha para a analize de erros gramaticais
+          unsigned a, b=0;
+          for(a=0;a<getNumberOfTokens();a++) {
+              if(recuperaToken(a).linha == linha-1) {
+                  tokensLinha[b++] = recuperaToken(a);
+              }
+              if(recuperaToken(a).linha == linha) {
+                  break;
+              }
+          }
+          if (analizaLinha(tokensLinha,b)) {
+              return 1;
+          }
+      }
   }
 
 
@@ -206,4 +215,50 @@ int ehNome(char* nome) {
   }
 
   return 1;
+}
+
+
+int analizaLinha(Token* tokens, int tam) {
+    if(tam==0)
+        return 0;
+    if(tokens[0].tipo==Diretiva) {
+        if(!strcmp(tokens[0].palavra,".set") && (tam<2 || tokens[1].tipo!=Nome || (!(tokens[2].tipo==Decimal) && !(tokens[2].tipo==Hexadecimal)))) {
+                fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+                return 1;
+        }
+        else if(!strcmp(tokens[0].palavra,".org") && (tam<1 || (!(tokens[1].tipo==Decimal && toDec(tokens[1].palavra)<1024) && !(tokens[1].tipo==Hexadecimal && toHex(tokens[1].palavra)<1024)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+            return 1;
+        }
+        else if(!strcmp(tokens[0].palavra,".align") && (tam<1 || (!(tokens[1].tipo==Decimal && toDec(tokens[1].palavra)<1024)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+            return 1;
+        }
+        else if(!strcmp(tokens[0].palavra,".wfill") && (tam<2 || !(tokens[1].tipo==Decimal && toDec(tokens[1].palavra)<1024) || (!(tokens[2].tipo==Decimal) && !(tokens[2].tipo==Hexadecimal) &&
+            !(tokens[2].tipo==Nome)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+            return 1;
+        }
+        else if(!strcmp(tokens[0].palavra,".word") && (tam<1 || (!(tokens[2].tipo==Decimal) && !(tokens[2].tipo==Hexadecimal) && !(tokens[2].tipo==Nome)))) {
+            fprintf(stderr, "ERRO GRAMATICAL: palavra na linha %d!\n", tokens[0].linha);
+            return 1;
+        }
+
+    }
+
+    return 0;
+}
+
+
+int toDec(char* str) { //converte uma string que representa um decimal para int
+    int i=0, a=0;
+    while(str[i]!='\0') {
+        i++;
+    }
+    return a;
+}
+
+int toHex(char* str) { //converte uma string que representa um hexa para int
+    int a=0;
+    return a;
 }
