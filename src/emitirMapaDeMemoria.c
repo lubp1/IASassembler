@@ -60,6 +60,7 @@ int emitirMapaDeMemoria()
                     rotulos[j].palavra[n] = '\0';
                     break;
                 }
+                n++;
             }
             rotulos[j].linha = recuperaToken(i).linha;
             j++;
@@ -71,12 +72,12 @@ int emitirMapaDeMemoria()
             k++;
         }
         else if(recuperaToken(i).tipo == Nome && !(recuperaToken(i-1).tipo == Diretiva && !strcmp(recuperaToken(i-1).palavra,".set"))) {
-            for(l=0;l<numRotulos;l++) {
+            for(l=0;l<j;l++) {
                 if(!strcmp(recuperaToken(i).palavra,rotulos[l].palavra) && recuperaToken(i).linha>=rotulos[l].linha) {
                     goto fim;
                 }
             }
-            for(l=0;l<numSym;l++) {
+            for(l=0;l<k;l++) {
                 if(!strcmp(recuperaToken(i).palavra,simbolos[l].palavra) && recuperaToken(i).linha>=simbolos[l].linha) {
                     goto fim;
                 }
@@ -87,6 +88,8 @@ int emitirMapaDeMemoria()
         fim: i++;
     }
 
+
+    //primeiro percurso pelo programa, para achar as posicoes das definicoes de rotulos
     i=0;
     lr='l';
     loop:
@@ -97,9 +100,12 @@ int emitirMapaDeMemoria()
                 if(!strcmp(recuperaToken(i).palavra,rotulos[t].palavra)) {
                     rotulos[t].pos=linha;
                     rotulos[t].lr=lr;
+                    i++;
+                    break;
                 }
                 t++;
             }
+            goto loop;
         }
         else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".org")) {
             if (recuperaToken(i+1).tipo == Decimal) {
@@ -113,11 +119,32 @@ int emitirMapaDeMemoria()
             i = i+2;
             goto loop;
         }
+        else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".word")) {
+            lr = 'r';
+            i++;
+        }
+        else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".set")) {
+            i=i+3;
+            goto loop;
+        }
+        else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".align")) {
+            i++;
+            goto loop;
+        }
+        else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".wfill")) {
+            linha = linha+(unsigned int)strtol(recuperaToken(i+1).palavra,NULL,10);
+            i=i+3;
+            goto loop;
+        }
+        else if(recuperaToken(i).tipo==Instrucao) {
+            i++;
+        }
 
         if(lr=='l') {
             lr = 'r';
         }
         else {
+            lr='l';
             linha++;
         }
         i++;
