@@ -42,7 +42,7 @@ set-parte1:
 set-parte2:
 	$(eval parte=parte2)
 
-$(TESTES): montador-p1.x executar-tudo
+$(TESTES): 
 	$(eval teste=$@)
 	@echo "------------------- TESTE:" $(teste) " -------------------------"
 

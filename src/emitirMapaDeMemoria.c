@@ -17,7 +17,7 @@ typedef struct Sym {
     unsigned int val;
 } Sym;
 
-
+void printPalavra(unsigned int hexa);
 
 
 
@@ -32,7 +32,7 @@ typedef struct Sym {
 int emitirMapaDeMemoria()
 {
     unsigned int i, numRotulos=0, numSym=0, j=0, k=0, l, linha=0;
-    unsigned char lr;
+    unsigned char lr, ml;
 
     if(getNumberOfTokens()==0)
         return 0;
@@ -88,7 +88,7 @@ int emitirMapaDeMemoria()
                     goto fim;
                 }
             }
-            printf("ERRO: Usado mas não definido: %s!", recuperaToken(i).palavra);
+            fprintf(stderr, "ERRO: Usado mas não definido: %s", recuperaToken(i).palavra);
             return 1;
         }
         fim: i++;
@@ -127,7 +127,7 @@ int emitirMapaDeMemoria()
         }
         else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".word")) {
             if(lr=='r') {
-                printf("IMPOSSIVEL MONTAR CODIGO!");
+                fprintf(stderr, "IMPOSSIVEL MONTAR CODIGO!\n");
                 return 1;
             }
             lr = 'r';
@@ -170,10 +170,8 @@ int emitirMapaDeMemoria()
     //Segundo percurso, para imprimir o mapa
     linha=0;
     i=0;
-    lr='l';
-    if(strcmp(recuperaToken(i).palavra,".org")!=0 & !(!strcmp(recuperaToken(i).palavra,".set") && !strcmp(recuperaToken(i+3).palavra,".org"))) {
-        printf("000 ");
-    }
+    ml='f'; //variavel que aponta se o numero da linha atual ja foi impresso
+    lr='l'; //variavel que aponta se esta na esquerda(l) ou direita(r)
     loop2:
     while(i<getNumberOfTokens()) {
         if(recuperaToken(i).tipo==DefRotulo) {
@@ -189,31 +187,36 @@ int emitirMapaDeMemoria()
                 linha = (unsigned int) strtol(recuperaToken(i + 1).palavra, NULL, 16);
                 lr='l';
             }
-            printf("%03X ", linha);
+            if(ml=='f') {
+                printf("%03X ", linha);
+                ml='t';
+            }
             i = i+2;
             goto loop2;
         }
         else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".word")) {
+            if(ml=='f')
+                printf("%03X ", linha);
             if(recuperaToken(i+1).tipo == Decimal)
-                printf("%010X\n", (unsigned int)strtol(recuperaToken(i+1).palavra,NULL,10));
+                printPalavra((unsigned int)strtol(recuperaToken(i+1).palavra,NULL,10));
             else if(recuperaToken(i+1).tipo == Hexadecimal)
-                printf("%010X\n", (unsigned int)strtol(recuperaToken(i+1).palavra,NULL,16));
+                printPalavra((unsigned int)strtol(recuperaToken(i+1).palavra,NULL,16));
             else if(recuperaToken(i+1).tipo == Nome) {
                 int n;
                 for(n=0;n<numRotulos;n++) {
                     if(!strcmp(rotulos[n].palavra,recuperaToken(i+1).palavra)) {
-                        printf("%010X\n", rotulos[n].pos);
+                        printPalavra(rotulos[n].pos);
                         break;
                     }
                 }
                 for(n=0;n<numSym;n++) {
                     if(!strcmp(simbolos[n].palavra,recuperaToken(i+1).palavra)) {
-                        printf("%010X\n", simbolos[n].val);
+                        printPalavra(simbolos[n].val);
                         break;
                     }
                 }
             }
-
+            ml='f';
             lr = 'r';
             i++;
         }
@@ -222,10 +225,8 @@ int emitirMapaDeMemoria()
             goto loop2;
         }
         else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".align")) {
-            unsigned char aux='l';
             if (!(linha%strtol(recuperaToken(i+1).palavra,NULL,10)==0 && lr=='l')) {
                 if(lr=='r') {
-                    aux='r';
                     printf("00 000\n");
                 }
                 linha++;
@@ -234,35 +235,34 @@ int emitirMapaDeMemoria()
                 }
                 lr='l';
             }
-            if(i+1<getNumberOfTokens() && aux=='r')
-                printf("%03X ", linha);
             i++;
             goto loop2;
         }
         else if(recuperaToken(i).tipo==Diretiva && !strcmp(recuperaToken(i).palavra,".wfill")) {
             int t;
             for(t=0;t<strtol(recuperaToken(i+1).palavra,NULL,10);t++) {
-                if (i+1<getNumberOfTokens() && t<strtol(recuperaToken(i+1).palavra,NULL,10))
+                if (i+1<getNumberOfTokens() && t<strtol(recuperaToken(i+1).palavra,NULL,10) && ml=='f')
                     printf("%03X ", linha);
                 if (recuperaToken(i + 2).tipo == Decimal)
-                    printf("%010X\n", (unsigned int) strtol(recuperaToken(i + 2).palavra, NULL, 10));
+                    printPalavra((unsigned int) strtol(recuperaToken(i + 2).palavra, NULL, 10));
                 else if (recuperaToken(i + 2).tipo == Hexadecimal)
-                    printf("%010X\n", (unsigned int) strtol(recuperaToken(i + 2).palavra, NULL, 16));
+                    printPalavra((unsigned int) strtol(recuperaToken(i + 2).palavra, NULL, 16));
                 else if (recuperaToken(i + 2).tipo == Nome) {
                     int n;
                     for (n = 0; n < numRotulos; n++) {
                         if (!strcmp(rotulos[n].palavra, recuperaToken(i + 2).palavra)) {
-                            printf("%010X\n", rotulos[n].pos);
+                            printPalavra(rotulos[n].pos);
                             break;
                         }
                     }
                     for (n = 0; n < numSym; n++) {
                         if (!strcmp(simbolos[n].palavra, recuperaToken(i + 2).palavra)) {
-                            printf("%010X\n", simbolos[n].val);
+                            printPalavra(simbolos[n].val);
                             break;
                         }
                     }
                 }
+                ml='f';
                 linha++;
             }
             lr='l';
@@ -300,7 +300,10 @@ int emitirMapaDeMemoria()
                 }
             }
             else if(!strcmp(recuperaToken(i).palavra,"jumpl") || !strcmp(recuperaToken(i).palavra,"jumpr")){
-                if(recuperaToken(i+1).tipo != Nome)
+                if(!strcmp(recuperaToken(i).palavra,"jumpr")) {
+                    instrucao = 16;
+                }
+                else if(recuperaToken(i+1).tipo != Nome)
                     instrucao = 15;
                 else {
                     int n;
@@ -318,10 +321,14 @@ int emitirMapaDeMemoria()
             }
             else if(!strcmp(recuperaToken(i).palavra,"add"))
                 instrucao = 5;
+            else if(!strcmp(recuperaToken(i).palavra,"store"))
+                instrucao = 33;
             else if(!strcmp(recuperaToken(i).palavra,"addabs"))
                 instrucao = 7;
             else if(!strcmp(recuperaToken(i).palavra,"sub"))
                 instrucao = 6;
+            else if(!strcmp(recuperaToken(i).palavra,"subabs"))
+                instrucao = 8;
             else if(!strcmp(recuperaToken(i).palavra,"mult"))
                 instrucao = 11;
             else if(!strcmp(recuperaToken(i).palavra,"div"))
@@ -331,7 +338,10 @@ int emitirMapaDeMemoria()
             else if(!strcmp(recuperaToken(i).palavra,"rsh"))
                 instrucao = 21;
             else if(!strcmp(recuperaToken(i).palavra,"storal") || !strcmp(recuperaToken(i).palavra,"storar")) {
-                if(recuperaToken(i+1).tipo != Nome)
+                if(!strcmp(recuperaToken(i).palavra,"storar")) {
+                    instrucao = 19;
+                }
+                else if(recuperaToken(i+1).tipo != Nome)
                     instrucao = 18;
                 else {
                     int n;
@@ -352,10 +362,16 @@ int emitirMapaDeMemoria()
 
 
 
+            if(ml=='f') {
+                printf("%03X ", linha);
+                ml='t';
+            }
 
 
-
-            if(recuperaToken(i+1).tipo == Decimal) {
+            if(!strcmp(recuperaToken(i).palavra,"rsh") || !strcmp(recuperaToken(i).palavra,"lsh") || !strcmp(recuperaToken(i).palavra,"ldmq")) {
+                printf("%02X 000", instrucao);
+            }
+            else if(recuperaToken(i+1).tipo == Decimal) {
                 printf("%02X %03X", instrucao, (unsigned int)strtol(recuperaToken(i+1).palavra,NULL,10));
             }
             else if(recuperaToken(i+1).tipo == Hexadecimal) {
@@ -378,10 +394,13 @@ int emitirMapaDeMemoria()
             }
             if(lr=='l')
                 printf(" ");
-            else if(lr=='r')
+            else {
                 printf("\n");
+                ml='f';
+            }
 
-            i++;
+            if(!(!strcmp(recuperaToken(i).palavra,"rsh") || !strcmp(recuperaToken(i).palavra,"lsh") || !strcmp(recuperaToken(i).palavra,"ldmq")))
+                i++;
         }
 
         if(lr=='l') {
@@ -390,8 +409,6 @@ int emitirMapaDeMemoria()
         else {
             lr='l';
             linha++;
-            if(i+1<getNumberOfTokens() && !(recuperaToken(i+1).tipo==Diretiva))
-                printf("%03X ", linha);
 
         }
         i++;
@@ -407,4 +424,9 @@ int emitirMapaDeMemoria()
     free(rotulos);
     free(simbolos);
     return 0;
+}
+
+
+void printPalavra(unsigned int hexa) {
+    printf("%02X %03X %02X %03X\n", hexa-hexa%(16*16*16*16*16*16*16), hexa%(16*16*16*16*16*16*16)-hexa%(16*16*16*16*16),(hexa%(16*16*16*16*16))-hexa%(16*16*16),hexa%(16*16*16));
 }
